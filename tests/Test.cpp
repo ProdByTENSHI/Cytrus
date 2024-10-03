@@ -19,5 +19,7 @@ int main(int argc, char **argv) {
   _file.SerializeNode(_node);
   _file.SerializeNode(_otherRootNode);
 
+  _file.DeserializeFile();
+
   return 0;
 }

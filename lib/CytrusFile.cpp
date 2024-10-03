@@ -1,44 +1,9 @@
 #include "CytrusFile.h"
 
 #include <iostream>
+#include <sstream>
 
 namespace cytrus {
-// <=== NODE ===>
-Node::Node(const std::string &name) : m_Name(name) {}
-
-u32 Node::SetString(const std::string &value) {
-  for (i32 i = 0; i < m_Content.size(); i++) {
-    if (m_Content[i] != value)
-      continue;
-
-    m_Content[i] = value;
-    return i;
-  }
-
-  m_Content.push_back(value);
-  return m_Content.size() - 1;
-}
-
-std::string Node::GetString(u32 index) {
-  if (m_Content.size() - 1 < index) {
-    std::cout << "[Cytrus] Error: Could not get String at index " << index
-              << std::endl;
-    return "";
-  }
-
-  return m_Content[index];
-}
-
-Node &Node::operator[](const std::string &key) {
-  if (m_ChildNodes.find(key) == m_ChildNodes.end()) {
-    m_ChildNodes[key] = new Node(key);
-    return *m_ChildNodes[key];
-  }
-
-  return *m_ChildNodes[key];
-}
-
-// <=== CYTRUS FILE ===>
 CytrusFile::CytrusFile(const std::string &filePath) : m_FilePath(filePath) {}
 
 CytrusFile::~CytrusFile() {}
@@ -56,8 +21,6 @@ CytrusFile::~CytrusFile() {}
 */
 void CytrusFile::SerializeNode(const Node &node) {
   static u32 indentationLevel = 0;
-  std::cout << "[Cytrus] Indentation Level for Node " << node.m_Name << ": "
-            << indentationLevel << std::endl;
 
   OpenFile();
   Indent(indentationLevel);
@@ -88,18 +51,33 @@ void CytrusFile::SerializeNode(const Node &node) {
   }
 }
 
-void CytrusFile::OpenFile() {
+std::vector<Node *> CytrusFile::DeserializeFile() {
+  std::vector<Node *> _data;
+
+  if (!OpenFile())
+    return _data;
+
+  std::stringstream _buffer;
+  _buffer << m_FileStream.rdbuf();
+
+  std::cout << "[Cytrus] Deserialized Data: " << _buffer.str() << std::endl;
+
+  return _data;
+}
+
+bool CytrusFile::OpenFile() {
   if (m_FileStream.is_open()) {
-    std::cout << "[Cytrus] File is already opened" << std::endl;
-    return;
+    return true;
   }
 
-  m_FileStream.open(m_FilePath, std::ios::out | std::ios::app);
+  m_FileStream.open(m_FilePath, std::ios::in | std::ios::out | std::ios::app);
   if (!m_FileStream.is_open()) {
     std::cout << "[Cytrus] Error: Could not open File " << m_FilePath
               << std::endl;
-    return;
+    return false;
   }
+
+  return true;
 }
 
 void CytrusFile::CloseFile() { m_FileStream.close(); }
