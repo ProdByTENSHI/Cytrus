@@ -1,5 +1,7 @@
 #include "CytrusFile.h"
 
+#include "Lexer.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -60,7 +62,7 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
   std::stringstream _buffer;
   _buffer << m_FileStream.rdbuf();
 
-  std::cout << "[Cytrus] Deserialized Data: " << _buffer.str() << std::endl;
+  Lexer::TokenizeData(_buffer.str());
 
   return _data;
 }
