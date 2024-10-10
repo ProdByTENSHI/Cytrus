@@ -2,7 +2,6 @@
 #include "Types.h"
 
 #include <fstream>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -29,6 +28,12 @@ public:
   // keeping the Hierachy
   // [in] node: The Root Node to traverse down
   void SerializeNode(const Node &node);
+
+  // Splits the Raw Text Data into Tokens that get Parsed by the Parser
+  std::vector<Token> Tokenize(const std::string &input);
+
+  // Parses the Tokens and creates the Nodes and Values
+  std::vector<Node *> Parse(const std::vector<Token> &tokens);
 
   // Deserializes the given File and returns a Vector of Nodes
   // [return] std::vector<Node*>: Vector of Node Pointers

@@ -51,17 +51,14 @@ void CytrusFile::SerializeNode(const Node &node) {
   }
 }
 
-std::vector<Node *> CytrusFile::DeserializeFile() {
+std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
   std::vector<Token> _tokens;
-  std::vector<Node *> _data;
-
-  u32 _qMarkCount = 0;
 
   if (!OpenFile())
-    return _data;
+    return _tokens;
 
   std::stringstream _buffer;
-  _buffer << m_FileStream.rdbuf();
+  _buffer << input;
 
   std::string _currentWord;
   bool _isWord = false;
@@ -158,7 +155,6 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
       _isWord = false;
       _token.m_Type = TokenType::QMarks;
       _token.m_Content = '"';
-      ++_qMarkCount;
       break;
 
     case ',':
@@ -200,17 +196,52 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
     _isInvalid = false;
   }
 
-  std::cout << "QUESTION MARKS: " << _qMarkCount << std::endl;
+  return _tokens;
+}
 
-  for (i32 i = 0; i < _tokens.size(); i++) {
+std::vector<Node *> CytrusFile::Parse(const std::vector<Token> &tokens) {
+  std::vector<Node *> _data;
 
-    if (_tokens[i].m_Content.empty()) {
-      std::cout << "Oh Oh!" << std::endl;
-      continue;
+  // If true it means that a Quotation Mark was opened but not closed yet
+  bool _isQMarkOpen = false;
+
+  for (i32 i = 0; i < tokens.size(); i++) {
+    switch (tokens[i].m_Type) {
+    case TokenType::Word:
+      break;
+
+    case TokenType::ChildList:
+      break;
+
+    case TokenType::QMarks:
+      _isQMarkOpen = !_isQMarkOpen;
+      break;
+
+    case TokenType::Comma:
+      break;
+
+    default:
+      std::cout << "[Cytrus Parser] Something is fucked up?" << std::endl;
     }
-
-    std::cout << "Token " << i << ": " << _tokens[i].m_Content << std::endl;
   }
+
+  return _data;
+}
+
+std::vector<Node *> CytrusFile::DeserializeFile() {
+  std::vector<Node *> _data;
+
+  if (!OpenFile()) {
+    std::cerr << "[Cytrus] Could not open " << m_FilePath << std::endl;
+    return _data;
+  }
+
+  std::stringstream _stream;
+  _stream << m_FileStream.rdbuf();
+  std::vector<Token> _tokens = Tokenize(_stream.str());
+
+  _data = Parse(_tokens);
+  std::cout << "Created " << _data.size() << " Nodes" << std::endl;
 
   return _data;
 }
