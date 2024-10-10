@@ -13,7 +13,6 @@ enum class TokenType {
                  // belong to the Node before the ":"
   QMarks = 2,    // " "
   Comma = 3 // Token that indicates that another Node or Value is following on
-            // this Level
 };
 
 struct Token {

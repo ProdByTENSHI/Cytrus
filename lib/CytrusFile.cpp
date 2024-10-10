@@ -55,6 +55,8 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
   std::vector<Token> _tokens;
   std::vector<Node *> _data;
 
+  u32 _qMarkCount = 0;
+
   if (!OpenFile())
     return _data;
 
@@ -63,14 +65,20 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
 
   std::string _currentWord;
   bool _isWord = false;
+  bool _isInvalid = false;
 
   for (u32 i = 0; i < _buffer.str().size(); i++) {
     char _char = _buffer.str()[i];
     Token _token;
 
-    if (_currentWord.size() <= 0 &&
-        (_char == ' ' || _char == '\n' || _char == '\t')) {
-      continue;
+    if (_char == ' ' || _char == '\n' || _char == '\t' || _char == '\r' ||
+        _char == '\0') {
+      if (!_currentWord.empty()) {
+        _currentWord += ' ';
+        continue;
+      } else {
+        continue;
+      }
     }
 
     switch (_char) {
@@ -150,6 +158,7 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
       _isWord = false;
       _token.m_Type = TokenType::QMarks;
       _token.m_Content = '"';
+      ++_qMarkCount;
       break;
 
     case ',':
@@ -159,9 +168,15 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
       break;
 
     default:
+      _isInvalid = true;
       _isWord = false;
       std::cerr << "[Cytrus] No Token matches the Char " << _char << std::endl;
       break;
+    }
+
+    if (_isInvalid || _token.m_Content.empty()) {
+      _isInvalid = false;
+      continue;
     }
 
     if (!_isWord && _currentWord.size() > 0) {
@@ -170,15 +185,30 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
       _strToken.m_Content = _currentWord;
 
       _tokens.push_back(_strToken);
-      _tokens.push_back(_token);
+
+      if (!_token.m_Content.empty())
+        _tokens.push_back(_token);
 
       _currentWord.clear();
+      _isInvalid = false;
 
       continue;
     }
+
+    _tokens.push_back(_token);
+
+    _isInvalid = false;
   }
 
+  std::cout << "QUESTION MARKS: " << _qMarkCount << std::endl;
+
   for (i32 i = 0; i < _tokens.size(); i++) {
+
+    if (_tokens[i].m_Content.empty()) {
+      std::cout << "Oh Oh!" << std::endl;
+      continue;
+    }
+
     std::cout << "Token " << i << ": " << _tokens[i].m_Content << std::endl;
   }
 
