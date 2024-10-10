@@ -1,7 +1,5 @@
 #include "CytrusFile.h"
 
-#include <iostream>
-
 int main(int argc, char **argv) {
   cytrus::CytrusFile _file("Data.cyt");
   cytrus::Node _node("Root");

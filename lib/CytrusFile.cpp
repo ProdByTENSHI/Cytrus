@@ -1,7 +1,5 @@
 #include "CytrusFile.h"
 
-#include "Lexer.h"
-
 #include <iostream>
 #include <sstream>
 
@@ -54,6 +52,7 @@ void CytrusFile::SerializeNode(const Node &node) {
 }
 
 std::vector<Node *> CytrusFile::DeserializeFile() {
+  std::vector<Token> _tokens;
   std::vector<Node *> _data;
 
   if (!OpenFile())
@@ -62,7 +61,126 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
   std::stringstream _buffer;
   _buffer << m_FileStream.rdbuf();
 
-  Lexer::TokenizeData(_buffer.str());
+  std::string _currentWord;
+  bool _isWord = false;
+
+  for (u32 i = 0; i < _buffer.str().size(); i++) {
+    char _char = _buffer.str()[i];
+    Token _token;
+
+    if (_currentWord.size() <= 0 &&
+        (_char == ' ' || _char == '\n' || _char == '\t')) {
+      continue;
+    }
+
+    switch (_char) {
+    case 'a':
+    case 'b':
+    case 'c':
+    case 'd':
+    case 'e':
+    case 'f':
+    case 'g':
+    case 'h':
+    case 'i':
+    case 'j':
+    case 'k':
+    case 'l':
+    case 'm':
+    case 'n':
+    case 'o':
+    case 'p':
+    case 'q':
+    case 'r':
+    case 's':
+    case 't':
+    case 'u':
+    case 'v':
+    case 'w':
+    case 'x':
+    case 'y':
+    case 'z':
+    case 'A':
+    case 'B':
+    case 'C':
+    case 'D':
+    case 'E':
+    case 'F':
+    case 'G':
+    case 'H':
+    case 'I':
+    case 'J':
+    case 'K':
+    case 'L':
+    case 'M':
+    case 'N':
+    case 'O':
+    case 'P':
+    case 'Q':
+    case 'R':
+    case 'S':
+    case 'T':
+    case 'U':
+    case 'V':
+    case 'W':
+    case 'X':
+    case 'Y':
+    case 'Z':
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      _isWord = true;
+      _currentWord += _char;
+      break;
+
+    case ':':
+      _isWord = false;
+      _token.m_Type = TokenType::ChildList;
+      _token.m_Content = ':';
+      break;
+
+    case '"':
+      _isWord = false;
+      _token.m_Type = TokenType::QMarks;
+      _token.m_Content = '"';
+      break;
+
+    case ',':
+      _isWord = false;
+      _token.m_Type = TokenType::Comma;
+      _token.m_Content = ',';
+      break;
+
+    default:
+      _isWord = false;
+      std::cerr << "[Cytrus] No Token matches the Char " << _char << std::endl;
+      break;
+    }
+
+    if (!_isWord && _currentWord.size() > 0) {
+      Token _strToken;
+      _strToken.m_Type = TokenType::Word;
+      _strToken.m_Content = _currentWord;
+
+      _tokens.push_back(_strToken);
+      _tokens.push_back(_token);
+
+      _currentWord.clear();
+
+      continue;
+    }
+  }
+
+  for (i32 i = 0; i < _tokens.size(); i++) {
+    std::cout << "Token " << i << ": " << _tokens[i].m_Content << std::endl;
+  }
 
   return _data;
 }
