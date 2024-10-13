@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace cytrus {
+namespace tenshi {
 // <=== NODE ===>
 Node::Node(const std::string &name) : m_Name(name) {}
 
@@ -29,7 +29,9 @@ std::string Node::GetString(u32 index) {
   return m_Content[index];
 }
 
-Node &Node::operator[](const std::string &key) {
+Node &Node::operator[](const std::string &key) { return AddChild(key); }
+
+Node &Node::AddChild(const std::string &key) {
   if (m_ChildNodes.find(key) == m_ChildNodes.end()) {
     m_ChildNodes[key] = new Node(key);
     return *m_ChildNodes[key];
@@ -37,4 +39,16 @@ Node &Node::operator[](const std::string &key) {
 
   return *m_ChildNodes[key];
 }
-} // namespace cytrus
+
+void Node::Print() {
+  std::cout << "Data of " << m_Name << std::endl;
+
+  for (i32 i = 0; i < m_Content.size(); i++) {
+    std::cout << "\t" << m_Content[i] << std::endl;
+  }
+
+  for (auto &node : m_ChildNodes) {
+    node.second->Print();
+  }
+}
+} // namespace tenshi

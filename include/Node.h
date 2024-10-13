@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 
-namespace cytrus {
+namespace tenshi {
 inline const u32 INDENTATION_PER_NODE_LEVEL = 2;
 
 class Node {
@@ -24,6 +24,11 @@ public:
   // Subscript Operator Overload to create Child Nodes easily
   Node &operator[](const std::string &key);
 
+  // Create Child Node
+  Node &AddChild(const std::string &key);
+
+  void Print();
+
 public:
   // Holds all Children Nodes by their Name
   std::map<std::string, Node *> m_ChildNodes;
@@ -34,4 +39,4 @@ public:
   std::vector<std::string> m_Content;
 };
 
-} // namespace cytrus
+} // namespace tenshi

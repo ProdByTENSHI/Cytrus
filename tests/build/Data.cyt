@@ -1,13 +1,13 @@
 Root:
-  "Root Value 1",
-  "Root Value 2",
+  "Root Value 1"
+  "Root Value 2"
     Child1:
-      "Child1 Value 1",
-      "Child1 Value 2",
+      "Child1 Value 1"
+      "Child1 Value 2"
         Test:
             TestChild:
               "Moin"
 Root2:
-  "Moin 2",
+  "Moin 2"
     AnotherChild:
       "Moin was geht"

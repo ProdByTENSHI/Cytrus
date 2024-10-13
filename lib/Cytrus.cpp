@@ -1,9 +1,9 @@
-#include "CytrusFile.h"
+#include "Cytrus.h"
 
 #include <iostream>
 #include <sstream>
 
-namespace cytrus {
+namespace tenshi {
 CytrusFile::CytrusFile(const std::string &filePath) : m_FilePath(filePath) {}
 
 CytrusFile::~CytrusFile() {}
@@ -32,10 +32,10 @@ void CytrusFile::SerializeNode(const Node &node) {
 
     auto &_value = node.m_Content[i];
     m_FileStream << '\u0022' << _value << '\u0022';
-    if (node.m_ChildNodes.size() > 0 ||
-        (i < node.m_Content.size() - 1 && node.m_Content.size() != 0)) {
-      m_FileStream << ",";
-    }
+    // if (node.m_ChildNodes.size() > 0 ||
+    //     (i < node.m_Content.size() - 1 && node.m_Content.size() != 0)) {
+    //   m_FileStream << ",";
+    // }
 
     m_FileStream << std::endl;
   }
@@ -157,11 +157,11 @@ std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
       _token.m_Content = '"';
       break;
 
-    case ',':
-      _isWord = false;
-      _token.m_Type = TokenType::Comma;
-      _token.m_Content = ',';
-      break;
+      // case ',':
+      //   _isWord = false;
+      //   _token.m_Type = TokenType::Comma;
+      //   _token.m_Content = ',';
+      //   break;
 
     default:
       _isInvalid = true;
@@ -202,27 +202,50 @@ std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
 std::vector<Node *> CytrusFile::Parse(const std::vector<Token> &tokens) {
   std::vector<Node *> _data;
 
-  // If true it means that a Quotation Mark was opened but not closed yet
-  bool _isQMarkOpen = false;
+  if (tokens.size() <= 1) {
+    std::cout
+        << "[Cytrus] Cannot parse Tokens because it is only 1 or less Tokens"
+        << std::endl;
+  }
 
+  Node *currentNode = nullptr;
+  std::vector<Token> _parseGroup;
   for (i32 i = 0; i < tokens.size(); i++) {
-    switch (tokens[i].m_Type) {
-    case TokenType::Word:
-      break;
+    _parseGroup.push_back(tokens[i]);
+    if (_parseGroup.size() == 1)
+      continue;
 
-    case TokenType::ChildList:
-      break;
+    // Check against Grammar
+    bool _wasCorrect = false;
+    if (_parseGroup.size() == 2) {
+      // Create New Node
+      if (_parseGroup[0].m_Type == TokenType::Word &&
+          _parseGroup[1].m_Type == TokenType::ChildList) {
+        Node *newNode = new Node(_parseGroup[0].m_Content);
+        if (currentNode != nullptr) {
+          // Set Node as child of parent Node
+          currentNode->AddChild(_parseGroup[0].m_Content);
+        }
 
-    case TokenType::QMarks:
-      _isQMarkOpen = !_isQMarkOpen;
-      break;
+        currentNode = newNode;
+        _data.push_back(currentNode);
+        _wasCorrect = true;
+      }
+    } else if (_parseGroup.size() == 3) {
+      if (_parseGroup[0].m_Type == TokenType::QMarks &&
+          _parseGroup[1].m_Type == TokenType::Word &&
+          _parseGroup[2].m_Type == TokenType::QMarks) {
+        // Create Value for current Node
+        currentNode->SetString(_parseGroup[1].m_Content);
 
-    case TokenType::Comma:
-      break;
-
-    default:
-      std::cout << "[Cytrus Parser] Something is fucked up?" << std::endl;
+        _wasCorrect = true;
+      }
     }
+
+    if (!_wasCorrect)
+      continue;
+
+    _parseGroup.clear();
   }
 
   return _data;
@@ -241,7 +264,6 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
   std::vector<Token> _tokens = Tokenize(_stream.str());
 
   _data = Parse(_tokens);
-  std::cout << "Created " << _data.size() << " Nodes" << std::endl;
 
   return _data;
 }
@@ -270,5 +292,4 @@ void CytrusFile::Indent(u32 indentationLevel) {
 
   m_FileStream.flush();
 }
-
-} // namespace cytrus
+} // namespace tenshi

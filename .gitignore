@@ -31,6 +31,8 @@
 *.out
 *.app
 
+*.cyt
+
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
@@ -44,3 +46,4 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 *.idx
+Data.cyt
