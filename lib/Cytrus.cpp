@@ -225,6 +225,10 @@ std::vector<Node *> CytrusFile::Parse(const std::vector<Token> &tokens) {
         if (currentNode != nullptr) {
           // Set Node as child of parent Node
           currentNode->AddChild(_parseGroup[0].m_Content);
+          currentNode = newNode;
+          _wasCorrect = true;
+          _parseGroup.clear();
+          continue;
         }
 
         currentNode = newNode;
@@ -264,6 +268,7 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
   std::vector<Token> _tokens = Tokenize(_stream.str());
 
   _data = Parse(_tokens);
+  std::cout << _data.size() << std::endl;
 
   return _data;
 }

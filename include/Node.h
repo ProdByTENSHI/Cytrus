@@ -26,6 +26,7 @@ public:
 
   // Create Child Node
   Node &AddChild(const std::string &key);
+  void AddChild(Node &node);
 
   void Print();
 

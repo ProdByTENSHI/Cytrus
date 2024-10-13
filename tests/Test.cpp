@@ -1,5 +1,7 @@
 #include "Cytrus.h"
 
+#include <iostream>
+
 int main(int argc, char **argv) {
   tenshi::CytrusFile _file("Data.cyt");
   tenshi::Node _node("Root");

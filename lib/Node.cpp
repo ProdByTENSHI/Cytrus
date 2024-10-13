@@ -40,6 +40,8 @@ Node &Node::AddChild(const std::string &key) {
   return *m_ChildNodes[key];
 }
 
+void Node::AddChild(Node &node) { m_ChildNodes[node.m_Name] = &node; }
+
 void Node::Print() {
   std::cout << "Data of " << m_Name << std::endl;
 
