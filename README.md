@@ -1,4 +1,4 @@
-![Cytrus Logo]("https://github.com/ProdByTENSHI/Cytrus/blob/main/Cytrus-Icon.png")
+![Cytrus Logo](Cytrus-Icon.png)
 
 # Cytrus
  A lightweight, Node-Based Serialization Library
