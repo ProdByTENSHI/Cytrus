@@ -141,6 +141,7 @@ std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
     case '7':
     case '8':
     case '9':
+    case '.':
       _isWord = true;
       _currentWord += _char;
       break;
