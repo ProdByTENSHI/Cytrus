@@ -3,7 +3,6 @@
 #include <bitset>
 
 namespace tenshi {
-#ifndef OverwriteCytrusTypes
 #define BIT(X) 1 << X
 
 #ifdef _WIN32
@@ -30,5 +29,4 @@ typedef size_t size;
 typedef const void *offsetPtr;
 
 typedef float f32;
-#endif
 } // namespace tenshi

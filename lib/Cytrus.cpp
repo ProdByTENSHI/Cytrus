@@ -32,10 +32,10 @@ void CytrusFile::SerializeNode(const Node &node) {
 
     auto &_value = node.m_Content[i];
     m_FileStream << '\u0022' << _value << '\u0022';
-    // if (node.m_ChildNodes.size() > 0 ||
-    //     (i < node.m_Content.size() - 1 && node.m_Content.size() != 0)) {
-    //   m_FileStream << ",";
-    // }
+    if (node.m_ChildNodes.size() > 0 ||
+        (i < node.m_Content.size() - 1 && node.m_Content.size() != 0)) {
+      m_FileStream << ",";
+    }
 
     m_FileStream << std::endl;
   }
@@ -158,16 +158,16 @@ std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
       _token.m_Content = '"';
       break;
 
-      // case ',':
-      //   _isWord = false;
-      //   _token.m_Type = TokenType::Comma;
-      //   _token.m_Content = ',';
-      //   break;
+    case ',':
+      _isWord = false;
+      _token.m_Type = TokenType::Comma;
+      _token.m_Content = ',';
+      break;
 
     default:
       _isInvalid = true;
       _isWord = false;
-      std::cerr << "[Cytrus] No Token matches the Char " << _char << std::endl;
+      LOG("Token is not valid " << _token.m_Content);
       break;
     }
 
@@ -204,14 +204,16 @@ std::vector<Node *> CytrusFile::Parse(const std::vector<Token> &tokens) {
   std::vector<Node *> _data;
 
   if (tokens.size() <= 1) {
-    std::cout
-        << "[Cytrus] Cannot parse Tokens because it is only 1 or less Tokens"
-        << std::endl;
+    LOG("Cannot parse Tokens because there are only "
+        << tokens.size() << " Tokens in the given Vector");
+    return _data;
   }
 
+  i32 _tokensLeft = tokens.size();
   Node *currentNode = nullptr;
   std::vector<Token> _parseGroup;
   for (i32 i = 0; i < tokens.size(); i++) {
+    _tokensLeft -= 1;
     _parseGroup.push_back(tokens[i]);
     if (_parseGroup.size() == 1)
       continue;
@@ -225,34 +227,56 @@ std::vector<Node *> CytrusFile::Parse(const std::vector<Token> &tokens) {
         Node *newNode = new Node(_parseGroup[0].m_Content);
         if (currentNode != nullptr) {
           // Set Node as child of parent Node
-          currentNode->AddChild(_parseGroup[0].m_Content);
+          currentNode->AddChild(*newNode);
+          LOG("Created Node " << _parseGroup[0].m_Content
+                              << " and set it as a Child to "
+                              << currentNode->m_Name);
+
           currentNode = newNode;
           _wasCorrect = true;
           _parseGroup.clear();
+
           continue;
         }
 
+        LOG("Created new Node " << newNode->m_Name);
         currentNode = newNode;
         _data.push_back(currentNode);
         _wasCorrect = true;
       }
-    } else if (_parseGroup.size() == 3) {
+    } else if (_parseGroup.size() == 3 && tokens.size() <= i + 1 &&
+               tokens[i + 1].m_Type != TokenType::Comma) {
       if (_parseGroup[0].m_Type == TokenType::QMarks &&
           _parseGroup[1].m_Type == TokenType::Word &&
           _parseGroup[2].m_Type == TokenType::QMarks) {
         // Create Value for current Node
         currentNode->SetString(_parseGroup[1].m_Content);
 
+        LOG("Created Value for Node "
+            << currentNode->m_Name << " Value: " << _parseGroup[1].m_Content);
+        LOG("Reset current Node to nullptr");
+
+        currentNode = nullptr;
         _wasCorrect = true;
+      }
+    } else if (_parseGroup.size() == 4) {
+      if (_parseGroup[0].m_Type == TokenType::QMarks &&
+          _parseGroup[1].m_Type == TokenType::Word &&
+          _parseGroup[2].m_Type == TokenType::QMarks &&
+          _parseGroup[3].m_Type == TokenType::Comma) {
+        currentNode->SetString(_parseGroup[1].m_Content);
+
+        LOG("Created Value for Node "
+            << currentNode->m_Name << " Value: " << _parseGroup[1].m_Content);
       }
     }
 
     if (!_wasCorrect)
       continue;
-
     _parseGroup.clear();
   }
 
+  LOG("FINISHED PARSING with " << _tokensLeft << " Tokens not being parsed");
   return _data;
 }
 
@@ -260,7 +284,6 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
   std::vector<Node *> _data;
 
   if (!OpenFile()) {
-    std::cerr << "[Cytrus] Could not open " << m_FilePath << std::endl;
     return _data;
   }
 
@@ -269,8 +292,8 @@ std::vector<Node *> CytrusFile::DeserializeFile() {
   std::vector<Token> _tokens = Tokenize(_stream.str());
 
   _data = Parse(_tokens);
-  std::cout << _data.size() << std::endl;
-
+  LOG("Finished Deserialization and created " << _data.size()
+                                              << " Root Level Nodes");
   return _data;
 }
 
@@ -281,8 +304,7 @@ bool CytrusFile::OpenFile() {
 
   m_FileStream.open(m_FilePath, std::ios::in | std::ios::out | std::ios::app);
   if (!m_FileStream.is_open()) {
-    std::cout << "[Cytrus] Error: Could not open File " << m_FilePath
-              << std::endl;
+    LOG("ERROR: Could not Open File " << m_FilePath);
     return false;
   }
 

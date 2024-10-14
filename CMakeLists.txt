@@ -6,10 +6,17 @@ project(Cytrus VERSION 1.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "") # works
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Command Line Options
+set(CYTRUS_DEBUG_OUTPUT OFF CACHE INTERNAL "")
+
 # Enable Link Time Optimization
 set(CMAKE_INTERPROCEDUAL_OPTIMIZATION TRUE)
 
 add_library(Cytrus STATIC "${CMAKE_SOURCE_DIR}/lib/Main.cpp")
+
+if(${CYTRUS_DEBUG_OUTPUT})
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE CYTRUS_DEBUG_OUTPUT)
+endif()
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/lib")
 

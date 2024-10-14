@@ -5,8 +5,26 @@
 #include "Types.h"
 
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
+
+/* CYTRUS MACROS:
+ *  #define CYTRUS_DEBUG_OUTPUT -> Outputs additional Debug Info for the
+ * seperate Processes(Disabled by default). Has to be set as a Compile Flag
+ */
+
+// Macro for only outputting Info when compiling with extra Debug Output
+#ifdef CYTRUS_DEBUG_OUTPUT
+#define LOG(str)                                                               \
+  do {                                                                         \
+    std::cout << "[CYTRUS] " << str << std::endl;                              \
+  } while (false)
+#else
+#define LOG(str)                                                               \
+  do {                                                                         \
+  } while (false)
+#endif
 
 namespace tenshi {
 class CytrusFile {
