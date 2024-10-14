@@ -1,3 +1,5 @@
+![Cytrus Logo]("https://raw.githubusercontent.com/ProdByTENSHI/Cytrus/refs/heads/main/Cytrus-Icon.png")
+
 # Cytrus
  A lightweight, Node-Based Serialization Library
 
@@ -10,5 +12,4 @@ There are currently 3 Data Types supported: Strings, Integers and Floats.
 ## How to use Cytrus:
 For a more detailed Example look at Test.cpp for an Example how to work with the nodes.
 
-Nodes: Can Contain Data which is stored as a String and other Nodes as Children
-Setting Data:
+More coming soon...
