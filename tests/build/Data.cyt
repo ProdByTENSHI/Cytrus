@@ -7,6 +7,9 @@ Root:
         Test:
             TestChild:
               "Moin"
+  Child2:
+    "Child2 Value 1",
+    "Child2 Value 2"
 Root2:
   "Moin 2",
     AnotherChild:

@@ -1,9 +1,15 @@
 #include "Cytrus.h"
 
 #include <iostream>
+#include <map>
 #include <sstream>
 
+#include <assert.h>
+
 namespace tenshi {
+// ##########################//
+//    <== CYTRUS FILE ==>    //
+// ##########################//
 CytrusFile::CytrusFile(const std::string &filePath) : m_FilePath(filePath) {}
 
 CytrusFile::~CytrusFile() {}
@@ -183,8 +189,9 @@ std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
 
       _tokens.push_back(_strToken);
 
-      if (!_token.m_Content.empty())
+      if (!_token.m_Content.empty()) {
         _tokens.push_back(_token);
+      }
 
       _currentWord.clear();
       _isInvalid = false;
@@ -193,7 +200,6 @@ std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
     }
 
     _tokens.push_back(_token);
-
     _isInvalid = false;
   }
 
@@ -201,6 +207,18 @@ std::vector<Token> CytrusFile::Tokenize(const std::string &input) {
 }
 
 std::vector<Node *> CytrusFile::Parse(const std::vector<Token> &tokens) {
+  // Struct to group up Data needed for each Node to keep Track of the
+  // Relationships
+  struct NodeParseData {
+    Node *m_Node = nullptr;
+    i32 m_ParentIndex = -1;
+    i32 m_Index = -1;
+
+    // If the last scanned Token Group implicated that another Value or Node is
+    // following
+    bool m_ChildrenFollowing = false;
+  };
+
   std::vector<Node *> _data;
 
   if (tokens.size() <= 1) {
@@ -209,78 +227,85 @@ std::vector<Node *> CytrusFile::Parse(const std::vector<Token> &tokens) {
     return _data;
   }
 
-  i32 _tokensLeft = tokens.size();
-  Node *currentNode = nullptr;
-  std::vector<Token> _parseGroup;
+  NodeParseData _currentNode;
+  u32 _currentNodeIndex = 0;
+  std::vector<NodeParseData> _nodeParseDataVec;
+  NodeParseData _parseData;
   for (i32 i = 0; i < tokens.size(); i++) {
-    _tokensLeft -= 1;
-    _parseGroup.push_back(tokens[i]);
-    if (_parseGroup.size() == 1)
-      continue;
-
-    // Check against Grammar
     bool _wasCorrect = false;
-    if (_parseGroup.size() == 2) {
-      // Create New Node
-      if (_parseGroup[0].m_Type == TokenType::Word &&
-          _parseGroup[1].m_Type == TokenType::ChildList) {
-        Node *newNode = new Node(_parseGroup[0].m_Content);
-        if (currentNode != nullptr) {
-          // Set Node as child of parent Node
-          currentNode->AddChild(*newNode);
-          LOG("Created Node " << _parseGroup[0].m_Content
-                              << " and set it as a Child to "
-                              << currentNode->m_Name);
 
-          currentNode = newNode;
-          _wasCorrect = true;
-          _parseGroup.clear();
+    // <== CHECK AGAINST GRAMMAR ==>
+    // Create new Node
+    if (tokens.size() >= i + 1 &&
+        (tokens[i].m_Type == TokenType::Word &&
+         tokens[i + 1].m_Type == TokenType::ChildList)) {
+      Node *node = new Node(tokens[i].m_Content);
+      if (_nodeParseDataVec.size() == 0) {
+        _parseData.m_Node = node;
+        _currentNode.m_Node = node;
+        _nodeParseDataVec.push_back(_parseData);
+        _data.push_back(node);
 
-          continue;
-        }
+        LOG("Created first Root Node " << node->m_Name);
 
-        LOG("Created new Node " << newNode->m_Name);
-        currentNode = newNode;
-        _data.push_back(currentNode);
-        _wasCorrect = true;
+        i += 2;
+        continue;
       }
-    } else if (_parseGroup.size() == 3 && tokens.size() <= i + 1 &&
-               tokens[i + 1].m_Type != TokenType::Comma) {
-      if (_parseGroup[0].m_Type == TokenType::QMarks &&
-          _parseGroup[1].m_Type == TokenType::Word &&
-          _parseGroup[2].m_Type == TokenType::QMarks) {
-        // Create Value for current Node
-        currentNode->SetString(_parseGroup[1].m_Content);
 
-        LOG("Created Value for Node "
-            << currentNode->m_Name << " Value: " << _parseGroup[1].m_Content);
-        LOG("Reset current Node to nullptr");
-
-        currentNode = nullptr;
-        _wasCorrect = true;
+      // Check if Node is a Child or not
+      if (_currentNode.m_ChildrenFollowing) {
+        LOG("Created Child Node of " << _currentNode.m_Node->m_Name << ": "
+                                     << node->m_Name);
+        _currentNode.m_Node->AddChild(*node);
+        _parseData.m_ParentIndex = _currentNode.m_Index;
+      } else {
+        LOG("Created Root Node " << node->m_Name);
+        _data.push_back(node);
       }
-    } else if (_parseGroup.size() == 4) {
-      if (_parseGroup[0].m_Type == TokenType::QMarks &&
-          _parseGroup[1].m_Type == TokenType::Word &&
-          _parseGroup[2].m_Type == TokenType::QMarks &&
-          _parseGroup[3].m_Type == TokenType::Comma) {
-        currentNode->SetString(_parseGroup[1].m_Content);
 
-        LOG("Created Value for Node "
-            << currentNode->m_Name << " Value: " << _parseGroup[1].m_Content);
-      }
+      _parseData.m_Node = node;
+      _currentNode.m_Node = node;
+      _nodeParseDataVec.push_back(_parseData);
+
+      // Skip the Parsed Tokens
+      i += 2;
     }
 
-    if (!_wasCorrect)
-      continue;
-    _parseGroup.clear();
+    // Create Value
+    if (tokens.size() >= i + 2 && (tokens[i].m_Type == TokenType::QMarks &&
+                                   tokens[i + 1].m_Type == TokenType::Word &&
+                                   tokens[i + 2].m_Type == TokenType::QMarks)) {
+      if (_currentNode.m_Node == nullptr) {
+        std::cerr << "[Cytrus] Error parsing File " << m_FilePath << ": "
+                  << " Values have to be Children of Nodes" << std::endl;
+        i += 3;
+        continue;
+      }
+
+      _currentNode.m_Node->SetString(tokens[i + 1].m_Content);
+      LOG("Created Value: " << _currentNode.m_Node->GetString(
+              _currentNode.m_Node->m_Content.size() - 1));
+
+      if (tokens.size() >= i + 3 && tokens[i + 3].m_Type == TokenType::Comma) {
+        _currentNode.m_ChildrenFollowing = true;
+        i += 4;
+        continue;
+      } else {
+        LOG("Tobanga Nö, Tobanga Nö");
+        _currentNode.m_ChildrenFollowing = false;
+        i += 3;
+        continue;
+      }
+    }
+    // <===========================>
   }
 
-  LOG("FINISHED PARSING with " << _tokensLeft << " Tokens not being parsed");
   return _data;
 }
 
 std::vector<Node *> CytrusFile::DeserializeFile() {
+  // Only holds Root Nodes
+  // The Children are hold by the Root Nodes itself
   std::vector<Node *> _data;
 
   if (!OpenFile()) {
@@ -320,4 +345,5 @@ void CytrusFile::Indent(u32 indentationLevel) {
 
   m_FileStream.flush();
 }
+
 } // namespace tenshi
